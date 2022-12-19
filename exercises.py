@@ -26,8 +26,11 @@ class ExerciseDescriptor(NamedTuple):
     rhythm: RhythmType
 
 
-def exercise_from_shape_and_pattern(shape: List[Position], pattern: List[int]) -> List[Position]:
+def exercise_from_shape_and_pattern(shape: List[Position], pattern: List[int], reversed=False) -> List[Position]:
     assert sum(pattern) > 0
+
+    if reversed:
+        shape.reverse()
 
     result = []
     current_index = -min(sum(pattern[:n]) for n in range(len(pattern)))
