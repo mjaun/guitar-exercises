@@ -7,30 +7,30 @@ from typing import NamedTuple, List
 from fretboard import Position
 
 
-class RhythmType(Enum):
+class ExerciseDescriptor(NamedTuple):
+    name: str
+    pattern: List[int]
+    feel: Feel
+
+
+class Feel(Enum):
     STRAIGHT = auto(),
     TRIPLET = auto(),
 
     def __str__(self):
         lookup_table = {
-            RhythmType.STRAIGHT: 'straight',
-            RhythmType.TRIPLET: 'triplet',
+            Feel.STRAIGHT: 'straight',
+            Feel.TRIPLET: 'triplet',
         }
 
         return lookup_table[self]
 
 
-class ExerciseDescriptor(NamedTuple):
-    name: str
-    pattern: List[int]
-    rhythm: RhythmType
-
-
-def exercise_from_shape_and_pattern(shape: List[Position], pattern: List[int], reversed=False) -> List[Position]:
+def generate_exercise(shape: List[Position], pattern: List[int], reverse=False) -> List[Position]:
     assert sum(pattern) > 0
 
-    if reversed:
-        shape.reverse()
+    if reverse:
+        shape = list(reversed(shape))
 
     result = []
     current_index = -min(sum(pattern[:n]) for n in range(len(pattern)))

@@ -4,96 +4,86 @@ import random
 
 from typing import List
 
-from exercises import RhythmType, ExerciseDescriptor, exercise_from_shape_and_pattern
+from exercises import Feel, ExerciseDescriptor, generate_exercise
 from music_theory import Scale
 from fretboard import get_caged_shape, CagedPosition, Tuning, Position, Context
-from output import add_exercise, write_file
+from output import GuitarProFile, print_shape, print_tab
+
+tuning_text = 'E2-A2-D3-G3-B3-E4'
+scale_text = 'E Dorian'
+number_of_exercises = 3
+
+ED = ExerciseDescriptor
 
 melodic_sequences = [
-    ExerciseDescriptor('1a*', [1, 1, 1, -2], RhythmType.STRAIGHT),
-    ExerciseDescriptor('1b*', [1, 1, -2, 1], RhythmType.STRAIGHT),
-    # ExerciseDescriptor('1c', [1, -2, 1, 1], RhythmType.STRAIGHT),
-    ExerciseDescriptor('1d*', [-2, 1, 1, 1], RhythmType.STRAIGHT),
-    # ExerciseDescriptor('1e', [-1, -1, 2, 1], RhythmType.STRAIGHT),
-    ExerciseDescriptor('1f*', [1, 1, -1], RhythmType.STRAIGHT),
-    ExerciseDescriptor('1g*', [1, 1, -1], RhythmType.TRIPLET),
-    ExerciseDescriptor('1h*', [-1, -1, 3], RhythmType.TRIPLET),
-    ExerciseDescriptor('1i*', [-1, 1, 1], RhythmType.TRIPLET),
-    # ExerciseDescriptor('1j', [-1, 1, 1], RhythmType.TRIPLET),
-    # ExerciseDescriptor('1k', [1, -1, 1], RhythmType.TRIPLET),
+    # ED('Melodic Sequences: 1a*', [1, 1, 1, -2], Feel.STRAIGHT),
+    # ED('Melodic Sequences: 1b*', [1, 1, -2, 1], Feel.STRAIGHT),
+    # ED('Melodic Sequences: 1c', [1, -2, 1, 1], Feel.STRAIGHT),
+    ED('Melodic Sequences: 1d*', [-2, 1, 1, 1], Feel.STRAIGHT),
+    # ED('Melodic Sequences: 1e', [-1, -1, 2, 1], Feel.STRAIGHT),
+    # ED('Melodic Sequences: 1f*', [1, 1, -1], Feel.STRAIGHT),
+    # ED('Melodic Sequences: 1g*', [1, 1, -1], Feel.TRIPLET),
+    ED('Melodic Sequences: 1h*', [-1, -1, 3], Feel.TRIPLET),
+    ED('Melodic Sequences: 1i*', [-1, 1, 1], Feel.TRIPLET),
+    # ED('Melodic Sequences: 1j', [1, -1, 1], Feel.TRIPLET),
+    # ED('Melodic Sequences: 1k', [1, 1, 1, -2], Feel.TRIPLET),
 ]
 
-intervals = [
-    ExerciseDescriptor('2a*', [2, -1], RhythmType.STRAIGHT),  # 3rds
-    ExerciseDescriptor('2b*', [3, -2], RhythmType.STRAIGHT),  # 4ths
-    # ExerciseDescriptor('2c', [4, -3], RhythmType.STRAIGHT),  # 5ths
-    ExerciseDescriptor('2d*', [5, -4], RhythmType.STRAIGHT),  # 6ths
-    # ExerciseDescriptor('2e', [6, -5], RhythmType.STRAIGHT),  # 7ths
-    # ExerciseDescriptor('2f', [7, -6], RhythmType.STRAIGHT),  # 7ths
+intervals = {
+    '3rds*': 2,
+    # '4ths*': 3,
+    # '5ths': 4,
+    # '6ths*': 5,
+    # '7ths': 6,
+    # 'Octaves': 7,
+}
+
+interval_patterns = [
+    *[ED(f'{n}: Normal*', [s, -(s - 1)], Feel.STRAIGHT) for n, s in intervals.items()],
+    *[ED(f'{n}: Inverted*', [-s, (s + 1)], Feel.STRAIGHT) for n, s in intervals.items()],
+    *[ED(f'{n}: One Up, One Down*', [s, 1, -s, 1], Feel.STRAIGHT) for n, s in intervals.items()],
+    #*[ED(f'{n}: One Down, One Up', [-s, 1, s, 1], Feel.STRAIGHT) for n, s in intervals.items()],
+    #*[ED(f'{n}: Two Up, One Down*', [s, -(s - 1), s, 1, -s, 1], Feel.STRAIGHT) for n, s in intervals.items()],
+    #*[ED(f'{n}: Two Down, One Up', [-s, (s + 1), -s, 1, s, 1], Feel.STRAIGHT) for n, s in intervals.items()],
+    #*[ED(f'{n}: In Triplets*', [s, -(s - 1)], Feel.TRIPLET) for n, s in intervals.items()],
+    #*[ED(f'{n}: One Up, One Down, In Triplets*', [s, 1, -s], Feel.TRIPLET) for n, s in intervals.items()],
 ]
 
-included_exercises: List[ExerciseDescriptor] = [
-    # *melodic_sequences,
-    *intervals,
+all_exercises: List[ExerciseDescriptor] = [
+    *melodic_sequences,
+    *interval_patterns,
 ]
 
 
 def main():
-    tuning = Tuning.from_text('E2-A2-D3-G3-B3-E4')
-    scale = Scale.from_text('E dorian')
-    ctx = Context(tuning, scale)
+    ctx = Context(Tuning.from_text(tuning_text), Scale.from_text(scale_text))
 
-    shape = get_caged_shape(ctx, random.choice(list(CagedPosition)))
+    caged_position = random.choice(list(CagedPosition))
+    shape = get_caged_shape(ctx, caged_position)
 
+    print_header(f'{scale_text} - {caged_position.name} Shape')
     print_shape(ctx, shape)
+
+    output_file = GuitarProFile('Exercises', f'{scale_text} - {caged_position.name} Shape')
+
+    for exercise in random.sample(all_exercises, k=number_of_exercises):
+        positions = generate_exercise(shape, exercise.pattern)
+
+        print_header(exercise.name)
+        print_tab(ctx, positions)
+
+        output_file.add_exercise(exercise.name, positions, exercise.feel)
+
+        positions = generate_exercise(shape, exercise.pattern, reverse=True)
+        output_file.add_exercise('', positions, exercise.feel)
+
+    output_file.write('exercises.gp5')
+
+
+def print_header(text: str):
     print()
-
-    exercise = random.choice(included_exercises)
-
-    print(f'Exercise {exercise.name} ({exercise.rhythm}):')
-    positions = exercise_from_shape_and_pattern(shape, exercise.pattern, reversed=False)
-    add_exercise(positions, exercise.rhythm)
-    print_tab(ctx, positions)
-    print()
-    positions = exercise_from_shape_and_pattern(shape, exercise.pattern, reversed=True)
-    add_exercise(positions, exercise.rhythm)
-    print_tab(ctx, positions)
-    print()
-
-    write_file()
-
-
-def print_shape(ctx: Context, shape: List[Position]):
-    min_fret = min(position.fret for position in shape)
-    max_fret = max(position.fret for position in shape)
-
-    line = ' '
-    for fret in range(min_fret, max_fret + 1):
-        line += str(fret).rjust(2) + '  '
-    print(line)
-
-    for string in range(ctx.tuning.string_count()):
-        line = '|'
-        for fret in range(min_fret, max_fret + 1):
-            if Position(string, fret) in shape:
-                line += '-x-|'
-            else:
-                line += '---|'
-        print(line)
-
-
-def print_tab(ctx: Context, positions: List[Position]):
-    lines = ['-' for _ in range(ctx.tuning.string_count())]
-
-    for position in positions:
-        for string in range(len(lines)):
-            if string == position.string:
-                lines[string] += str(position.fret) + '-'
-            else:
-                lines[string] += '-' * (len(str(position.fret)) + 1)
-
-    for line in lines:
-        print(line)
+    print(text)
+    print('=' * len(text))
 
 
 if __name__ == '__main__':

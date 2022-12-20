@@ -46,11 +46,10 @@ class Scale:
 
 
 class ScaleType:
-
     @staticmethod
     def from_text(text: str):
-        if text in known_scale_types:
-            text = known_scale_types[text]
+        if text.lower() in known_scale_types:
+            text = known_scale_types[text.lower()]
 
         return ScaleType([ScaleDegree.from_text(x) for x in text.split('-')])
 
