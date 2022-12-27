@@ -1,12 +1,27 @@
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import List, Optional, Union, NamedTuple
+from typing import List, Optional, Union, NamedTuple, Tuple
 
 from music_theory import ScaleDegree, AbsNote, RelNote, Scale
 
+HIGHEST_FRET = 22
 
-def get_caged_shape(ctx: Context, caged_position: CagedPosition) -> List[Position]:
+
+def get_all_caged_shapes(ctx: Context) -> List[Tuple[CagedPosition, Shape]]:
+    shapes = []
+
+    for caged_position in CagedPosition:
+        shape = get_caged_shape(ctx, caged_position)
+        shapes.append((caged_position, shape))
+
+        if shape_octave_up := move_shape_octave_up(shape):
+            shapes.append((caged_position, shape_octave_up))
+
+    return shapes
+
+
+def get_caged_shape(ctx: Context, caged_position: CagedPosition) -> Shape:
     string_count = ctx.tuning.string_count()
 
     # step one: figure out which scale degrees are on which string
@@ -58,6 +73,13 @@ def get_caged_shape(ctx: Context, caged_position: CagedPosition) -> List[Positio
     return positions
 
 
+def move_shape_octave_up(shape: Shape) -> Optional[Shape]:
+    if any(position.fret + 12 > HIGHEST_FRET for position in shape):
+        return None
+
+    return [Position(position.string, position.fret + 12) for position in shape]
+
+
 class CagedPosition(Enum):
     C = auto()
     A = auto()
@@ -104,3 +126,6 @@ class Tuning:
 class Position(NamedTuple):
     string: int
     fret: int
+
+
+Shape = List[Position]
