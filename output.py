@@ -11,6 +11,7 @@ class GuitarProFile:
         self.song = guitarpro.Song()
         self.song.title = title
         self.song.subtitle = subtitle
+        self.song.tempo = 80
 
     def add_exercise(self, name: str, positions: List[Position], rhythm: Feel):
         rhythm_settings = {
