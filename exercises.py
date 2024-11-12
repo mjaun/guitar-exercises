@@ -39,6 +39,10 @@ def generate_exercise(shape: List[Position], pattern: List[int], reverse=False) 
 
     while current_index < len(shape):
         result.append(shape[current_index])
+        
+        if current_index == len(shape) - 1:
+            break
+        
         current_index += next(pattern_iterator)
 
     return result
