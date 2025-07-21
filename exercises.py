@@ -37,12 +37,18 @@ def generate_exercise(shape: List[Position], pattern: List[int], reverse=False) 
 
     pattern_iterator = itertools.cycle(pattern)
 
-    while current_index < len(shape):
-        result.append(shape[current_index])
-        
-        if current_index == len(shape) - 1:
-            break
-        
-        current_index += next(pattern_iterator)
+    while True:
+        cycle = [shape[current_index]]
 
-    return result
+        for i in range(len(pattern) - 1):
+            current_index += pattern[i]
+            if current_index >= len(shape):
+                return result
+
+            cycle.append(shape[current_index])
+        
+        result.extend(cycle)
+        
+        current_index += pattern[-1]
+        if current_index >= len(shape):
+            return result
