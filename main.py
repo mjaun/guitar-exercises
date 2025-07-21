@@ -7,7 +7,7 @@ from typing import List
 from exercises import Feel, ExerciseDescriptor, generate_exercise
 from fretboard import Tuning, Context, get_all_caged_shapes
 from music_theory import Scale
-from output import GuitarProFile, print_shape, print_tab
+from output import GuitarProFile, print_shape, print_tab, print_header
 
 ED = ExerciseDescriptor
 
@@ -107,15 +107,16 @@ def main():
     # determine shape for the exercise
     scale_text = random.choice(scale_texts)
     ctx = Context(Tuning.from_text(tuning_text), Scale.from_text(scale_text))
-    caged_position, shape = random.choice(get_all_caged_shapes(ctx))
-
-    print_header(f'{scale_text} - {caged_position.name} Shape')
-    print_shape(ctx, shape)
+    caged_position, shape = random.choice(list(get_all_caged_shapes(ctx).items()))
 
     # generate exercise
     exercise = random.choice(all_exercises)
     positions = generate_exercise(shape, exercise.pattern)
     positions_reverse = generate_exercise(shape, exercise.pattern, reverse=True)
+
+    # print to console
+    print_header(f'{scale_text} - {caged_position.name} Shape')
+    print_shape(ctx, shape)
 
     print_header(exercise.name)
     print_tab(ctx, positions)
@@ -126,12 +127,6 @@ def main():
     output_file.add_exercise(exercise.name, positions, exercise.feel)
     output_file.add_exercise('', positions_reverse, exercise.feel)
     output_file.write(args.output_file)
-
-
-def print_header(text: str):
-    print()
-    print(text)
-    print('=' * len(text))
 
 
 if __name__ == '__main__':

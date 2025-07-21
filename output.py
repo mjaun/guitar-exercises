@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List
 
 import guitarpro
@@ -84,3 +86,9 @@ def print_tab(ctx: Context, positions: List[Position]):
 
     for line in lines:
         print(line)
+
+
+def print_header(text: str):
+    print()
+    print(text)
+    print('=' * len(text))
