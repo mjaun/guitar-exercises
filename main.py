@@ -1,16 +1,20 @@
 from __future__ import annotations
 
+import argparse
 import random
-from typing import List
 
+from typing import List
 from exercises import Feel, ExerciseDescriptor, generate_exercise
 from fretboard import Tuning, Context, get_all_caged_shapes
 from music_theory import Scale
 from output import GuitarProFile, print_shape, print_tab
 
-number_of_exercises = 1
+ED = ExerciseDescriptor
+
+# Tuning used for the generated exercises
 tuning_text = 'E2-A2-D3-G3-B3-E4'
 
+# Scales used for the generated exercises
 scale_texts = [
     'E Aeolian',
     'A Aeolian',
@@ -18,9 +22,7 @@ scale_texts = [
     'D Aeolian',
 ]
 
-
-ED = ExerciseDescriptor
-
+# Exercises with melodic sequences
 melodic_sequences = [
     ED('Melodic Sequences: 1a*', [1, 1, 1, -2], Feel.STRAIGHT),
     ED('Melodic Sequences: 1b*', [1, 1, -2, 1], Feel.STRAIGHT),
@@ -35,6 +37,7 @@ melodic_sequences = [
     # ED('Melodic Sequences: 1k', [1, 1, 1, -2], Feel.TRIPLET),
 ]
 
+# Exercises with intervals
 intervals = {
     '3rds*': 2,
     # '4ths*': 3,
@@ -55,6 +58,7 @@ interval_patterns = [
     # *[ED(f'{n}: One Up, One Down, In Triplets*', [s, 1, -s], Feel.TRIPLET) for n, s in intervals.items()],
 ]
 
+# Exercises with triads
 triad_patterns = [
     ED('Triads: Ascending*', [2, 2, -3], Feel.TRIPLET),
     ED('Triads: Descending*', [-2, -2, 5], Feel.TRIPLET),
@@ -72,6 +76,7 @@ triad_patterns = [
     # ED('Triads: Reversed Combined, 3 Against 2 Feel', [-2, -2, 1, 2, 2, 1], Feel.STRAIGHT),
 ]
 
+# Exercises with arpeggios
 arpeggio_patterns = [
     ED('Arpeggios: Ascending*', [2, 2, 2, -5], Feel.STRAIGHT),
     ED('Arpeggios: Descending*', [-2, -2, -2, 7], Feel.STRAIGHT),
@@ -85,6 +90,7 @@ arpeggio_patterns = [
     # ED('Arpeggios: 4 Against 3 Feel Descend Then Ascend', [-2, -2, -2, 1, 2, 2, 2, 1], Feel.TRIPLET),
 ]
 
+# Collect all exercises in a single list
 all_exercises: List[ExerciseDescriptor] = [
     *melodic_sequences,
     *interval_patterns,
@@ -94,6 +100,11 @@ all_exercises: List[ExerciseDescriptor] = [
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('output_file', help='Path to the generated GuitarPro file.')
+    args = parser.parse_args()
+
+    # determine shape for the exercise
     scale_text = random.choice(scale_texts)
     ctx = Context(Tuning.from_text(tuning_text), Scale.from_text(scale_text))
     caged_position, shape = random.choice(get_all_caged_shapes(ctx))
@@ -101,20 +112,20 @@ def main():
     print_header(f'{scale_text} - {caged_position.name} Shape')
     print_shape(ctx, shape)
 
+    # generate exercise
+    exercise = random.choice(all_exercises)
+    positions = generate_exercise(shape, exercise.pattern)
+    positions_reverse = generate_exercise(shape, exercise.pattern, reverse=True)
+
+    print_header(exercise.name)
+    print_tab(ctx, positions)
+    print()
+
+    # write to file
     output_file = GuitarProFile('Exercises', f'{scale_text} - {caged_position.name} Shape')
-
-    for exercise in random.sample(all_exercises, k=number_of_exercises):
-        positions = generate_exercise(shape, exercise.pattern)
-
-        print_header(exercise.name)
-        print_tab(ctx, positions)
-
-        output_file.add_exercise(exercise.name, positions, exercise.feel)
-
-        positions = generate_exercise(shape, exercise.pattern, reverse=True)
-        output_file.add_exercise('', positions, exercise.feel)
-
-    output_file.write('exercises.gp5')
+    output_file.add_exercise(exercise.name, positions, exercise.feel)
+    output_file.add_exercise('', positions_reverse, exercise.feel)
+    output_file.write(args.output_file)
 
 
 def print_header(text: str):

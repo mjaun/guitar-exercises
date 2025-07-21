@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import itertools
 from enum import Enum, auto
 from typing import NamedTuple, List
 
@@ -35,8 +34,6 @@ def generate_exercise(shape: List[Position], pattern: List[int], reverse=False) 
     result = []
     current_index = -min(sum(pattern[:n]) for n in range(len(pattern)))
 
-    pattern_iterator = itertools.cycle(pattern)
-
     while True:
         cycle = [shape[current_index]]
 
@@ -46,9 +43,9 @@ def generate_exercise(shape: List[Position], pattern: List[int], reverse=False) 
                 return result
 
             cycle.append(shape[current_index])
-        
+
         result.extend(cycle)
-        
+
         current_index += pattern[-1]
         if current_index >= len(shape):
             return result
